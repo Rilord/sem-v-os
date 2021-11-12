@@ -8,7 +8,7 @@
     {\
         fprintf(\
                 stderr, \
-                "Fatal: Result is %d in \n", res);\
+                "Fatal: Result is %d in %s and line: %d\n", res, __FILE__, __LINE__);\
         assert(res == SUCCESS);\
     }\
 }
@@ -29,7 +29,7 @@ int main(const int argc, const char *argv[]) {
         CHECK_RESULT(check_args(argc, argv, 4));
         CHECK_RESULT(fork_loop(atoi(argv[2]), atoi(argv[3])));
     } else if (strcmp(argv[1], "-e") == 0) {
-        char *cmds[2] = { "pwd", "ls -a" };
+        char *cmds[2] = { "pwd", "ls" };
         CHECK_RESULT(execlp_loop(atoi(argv[2]), atoi(argv[2]), cmds)); 
     } else if (strcmp(argv[1], "-w") == 0) {
         CHECK_RESULT(check_args(argc, argv, 4));

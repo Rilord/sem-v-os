@@ -21,32 +21,4 @@ typedef enum mod {
     QUIET = 1 
 } mod;
 
-
-result fork_loop(size_t child_count, size_t sleep_count);
-
-result parent_wait(size_t child_count, pid_t childs[]);
-
-result wait_loop(size_t child_count, size_t sleep_count);
-
-result execlp_loop(
-        size_t child_count, 
-        size_t cmd_count, 
-        char *cmds[]
-        );
-
-result pipe_loop(
-        size_t msg_count, char *messages[],
-        size_t child_count,
-        size_t buffer_size
-        );
-
-result mod_loop(
-        size_t msg_count, 
-        char *messages[],
-        size_t child_count,
-        size_t buffer_size
-        );
-
-result parent_shutdown();
-
 #endif /* _FORK_H_ */
