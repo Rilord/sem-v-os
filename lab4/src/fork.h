@@ -17,8 +17,8 @@ typedef enum result {
 } result;
 
 typedef enum mod { 
-    PRINT = 0, 
-    QUIET = 1 
+    PRINT = 1, 
+    QUIET = 0 
 } mod;
 
 #endif /* _FORK_H_ */

@@ -1,18 +1,50 @@
 #include "fork.h"
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
-#define CHILDS_COUNT 100
-#define BUFFER_SIZE 1024
-#define MSG_COUNT 3
+#define CHILDS_COUNT 4
+#define BUFFER_SIZE 2048
+#define MSG "ab"
+#define MSG_LEN 2
 
-static mod g_mod = QUIET;
+static mod g_mod = PRINT;
 
-static int msg_i = 0;
-
-void sig_change_mod(int signum) { 
-    g_mod = !g_mod; 
-    msg_i = 0;
+static void sig_change_mod(int signum) { 
+    g_mod = g_mod == PRINT ? QUIET : PRINT;
 }
 
+static void free_strings_array(char **arr, int n) {
+    for (size_t i = 0; i < n; i++)
+        free(arr[i]);
+    free(arr);
+}
+
+static char *repeat_string(const char *str, int count) {
+    char *ret = malloc(MSG_LEN * (count = (int) pow(2, count)));
+    if (ret == NULL)
+        return NULL;
+    strcpy(ret, str);
+    while (--count > 0) {
+        strcat(ret, str);
+    }
+    return ret;
+}
+
+static char **create_messages() {
+    char **arr = (char **) malloc(CHILDS_COUNT * sizeof(char *));
+    if (arr == NULL)
+        return NULL;
+    for (size_t i = 0; i < CHILDS_COUNT; ++i) {
+        arr[i] = (char *) repeat_string(MSG, i);
+        if (arr[i] == NULL) {
+            free_strings_array(arr, i);
+            return NULL;
+        }
+    }
+
+    return arr;
+}
 
 int main(void) {
 
@@ -22,8 +54,10 @@ int main(void) {
     pid_t childs[CHILDS_COUNT];
     char buffer[BUFFER_SIZE];
 
-    char* messages[MSG_COUNT] = {"Hello", ", ", "world!"};
+    char **messages = create_messages();
 
+    if (messages == NULL)
+        exit(ERROR_ALLOC_FAIL);
 
     if (pipe(fd) == -1) {
         fprintf(stderr, "Can't pipe\n");
@@ -33,7 +67,7 @@ int main(void) {
     printf("parent born: PID = %d ; PPID = %d ; GROUP = %d\n", getpid(),
             getppid(), getpgrp());
 
-    for (size_t i = 0, msg_i = 0; i < CHILDS_COUNT; ++i, msg_i++, msg_i %= MSG_COUNT) {
+    for (size_t i = 0, msg = 0; i < CHILDS_COUNT; ++i, msg+= 1 * g_mod, sleep(2)) {
         pid_t pid = fork();
 
         if (pid == -1) {
@@ -45,9 +79,11 @@ int main(void) {
 
             close(fd[0]);
             if (g_mod == PRINT) {
-                write(fd[1], messages[msg_i], strlen(messages[msg_i]));
-                printf("child %zd send : PID = %d ; MSG = %s\n", i, getpid(),
-                        messages[msg_i]);
+
+
+                write(fd[1], messages[msg], strlen(messages[msg]));
+                printf("child %zu sent : PID = %d ; MSG = %s\n", i, getpid(),
+                        messages[msg]);
             } else {
                 printf("child %zd send: quiet mode. no message send\n", i);
             }
@@ -91,10 +127,11 @@ int main(void) {
     if (read_bytes == -1)
         printf("error occured while read\n");
 
-    printf("parent recv: %s\n", buffer);
+    printf("parent recv: %s (%zu)\n", buffer, strlen(buffer));
     printf("parent died : PID = %d ; PPID = %d : GROUP = %d\n", getpid(),
             getppid(), getpgrp());
 
+    free_strings_array(messages, CHILDS_COUNT);
 
     return SUCCESS;
 }

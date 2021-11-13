@@ -1,8 +1,45 @@
 #include "fork.h"
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 #define CHILDS_COUNT 3
 #define BUFFER_SIZE 1024
-#define MSG_COUNT 3
+#define MSG "ab"
+#define MSG_LEN 2
+
+static void free_strings_array(char **arr, int n) {
+    for (size_t i = 0; i < n; i++)
+        free(arr[i]);
+    free(arr);
+}
+
+static char *repeat_string(const char *str, int count) {
+    char *ret = malloc(MSG_LEN * (count = (int) pow(2, count)));
+    if (ret == NULL)
+        return NULL;
+    strcpy(ret, str);
+    while (--count > 0) {
+        strcat(ret, str);
+    }
+    return ret;
+}
+
+static char **create_messages() {
+    char **arr = (char **) malloc(CHILDS_COUNT * sizeof(char *));
+    if (arr == NULL)
+        return NULL;
+    for (size_t i = 0; i < CHILDS_COUNT; ++i) {
+        arr[i] = (char *) repeat_string(MSG, i);
+        if (arr[i] == NULL) {
+            free_strings_array(arr, i);
+            return NULL;
+        }
+    }
+
+    return arr;
+}
+
 
 int main(void) {
 
@@ -10,7 +47,9 @@ int main(void) {
     pid_t childs[CHILDS_COUNT];
     char buffer[BUFFER_SIZE];
 
-    char* messages[MSG_COUNT] = {"Hello", ", ", "world!"};
+    char **messages = create_messages();
+
+
 
     if (pipe(fd) == -1) {
         fprintf(stderr, "Can't pipe\n");
@@ -20,7 +59,7 @@ int main(void) {
     printf("parent born: PID = %d ; PPID = %d ; GROUP = %d\n", getpid(),
             getppid(), getpgrp());
 
-    for (size_t i = 0, msg_i = 0; i < CHILDS_COUNT; ++i, msg_i++, msg_i %= MSG_COUNT) {
+    for (size_t i = 0, msg = 0; i < CHILDS_COUNT; ++i, ++msg) {
         pid_t pid = fork();
 
         if (pid == -1) {
@@ -31,9 +70,9 @@ int main(void) {
                     getpid(), getppid(), getpgrp());
 
             close(fd[0]);
-            write(fd[1], messages[msg_i], strlen(messages[msg_i]));
+            write(fd[1], messages[msg], strlen(messages[msg]));
             printf("child %zd send : PID = %d ; MSG = %s\n", i, getpid(),
-                    messages[msg_i]);
+                    messages[msg]);
 
             exit(SUCCESS);
         } else {
@@ -41,7 +80,7 @@ int main(void) {
         }
     }
 
-        for (size_t i = 0; i < CHILDS_COUNT; i++) {
+    for (size_t i = 0; i < CHILDS_COUNT; i++) {
         int status, stat_val = 0;
 
         printf("parent wait\n");
@@ -73,9 +112,9 @@ int main(void) {
         printf("couldn't read.");
 
 
-  printf("parent recv : %s\n", buffer);
-  printf("parent died : PID = %d ; PPID = %d ; GROUP = %d\n", getpid(),
-         getppid(), getpgrp());
+    printf("parent recv : %s\n", buffer);
+    printf("parent died : PID = %d ; PPID = %d ; GROUP = %d\n", getpid(),
+            getppid(), getpgrp());
 
     return SUCCESS;
 }
