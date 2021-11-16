@@ -5,8 +5,8 @@
 int main(void) {
 
     pid_t *childs = calloc(CHILDS_COUNT, sizeof(pid_t)); 
-    const char * const cmds[] = { "ls", "./sort" };
-    const char * const args[] = { "-la", "10"};
+    const char * const cmds[] = { "./matrix_multiplication", "./sort" };
+    const char * const args[] = { "-p", "10"};
 
     if (childs == NULL)
         exit(ERROR_ALLOC_FAIL);
