@@ -79,8 +79,6 @@ int main(void) {
 
             if (g_mod == PRINT) {
                 close(fd[0]);
-
-
                 write(fd[1], messages[msg], strlen(messages[msg]));
                 printf("child %zu sent : PID = %d ; MSG = %s\n", i, getpid(),
                         messages[msg]);
