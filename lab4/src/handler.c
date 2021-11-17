@@ -5,7 +5,7 @@
 
 #define CHILDS_COUNT 4
 #define BUFFER_SIZE 2048
-#define MSG "ab"
+#define MSG "01"
 #define MSG_LEN 2
 
 static mod g_mod = PRINT;
@@ -77,8 +77,8 @@ int main(void) {
             printf("child %zd born: PID = %d ; PPID = %d ; GROUP = %d\n", i,
                     getpid(), getppid(), getpgrp());
 
-            close(fd[0]);
             if (g_mod == PRINT) {
+                close(fd[0]);
 
 
                 write(fd[1], messages[msg], strlen(messages[msg]));
