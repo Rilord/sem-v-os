@@ -5,8 +5,10 @@
 
 #define CHILDS_COUNT 3
 #define BUFFER_SIZE 1024
-#define MSG "ab"
+#define MSG "12"
 #define MSG_LEN 2
+
+static int messages_size = 0;
 
 static void free_strings_array(char **arr, int n) {
     for (size_t i = 0; i < n; i++)
@@ -15,7 +17,9 @@ static void free_strings_array(char **arr, int n) {
 }
 
 static char *repeat_string(const char *str, int count) {
-    char *ret = malloc(MSG_LEN * (count = (int) pow(2, count)));
+    int message_size = MSG_LEN * (count = (int) pow(2, count));
+    messages_size += message_size;
+    char *ret = malloc(message_size);
     if (ret == NULL)
         return NULL;
     strcpy(ret, str);
@@ -49,7 +53,8 @@ int main(void) {
 
     char **messages = create_messages();
 
-
+    if (messages == NULL)
+        exit(ERROR_ALLOC_FAIL);
 
     if (pipe(fd) == -1) {
         fprintf(stderr, "Can't pipe\n");
@@ -73,6 +78,7 @@ int main(void) {
             write(fd[1], messages[msg], strlen(messages[msg]));
             printf("child %zd send : PID = %d ; MSG = %s\n", i, getpid(),
                     messages[msg]);
+
 
             exit(SUCCESS);
         } else {
@@ -106,7 +112,7 @@ int main(void) {
     }
 
     close(fd[1]);
-    ssize_t _read = read(fd[0], buffer, BUFFER_SIZE);
+    ssize_t _read = read(fd[0], buffer, messages_size);
 
     if (_read == -1)
         printf("couldn't read.");
@@ -115,6 +121,8 @@ int main(void) {
     printf("parent recv : %s\n", buffer);
     printf("parent died : PID = %d ; PPID = %d ; GROUP = %d\n", getpid(),
             getppid(), getpgrp());
+
+    free_strings_array(messages, CHILDS_COUNT);
 
     return SUCCESS;
 }

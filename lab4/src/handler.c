@@ -10,6 +10,8 @@
 
 static mod g_mod = PRINT;
 
+static int messages_size = 0;
+
 static void sig_change_mod(int signum) { 
     g_mod = g_mod == PRINT ? QUIET : PRINT;
 }
@@ -21,7 +23,9 @@ static void free_strings_array(char **arr, int n) {
 }
 
 static char *repeat_string(const char *str, int count) {
-    char *ret = malloc(MSG_LEN * (count = (int) pow(2, count)));
+    int message_size = MSG_LEN * (count = (int) pow(2, count));
+    messages_size += message_size;
+    char *ret = malloc(message_size);
     if (ret == NULL)
         return NULL;
     strcpy(ret, str);
@@ -120,7 +124,7 @@ int main(void) {
     }
 
     close(fd[1]);
-    ssize_t read_bytes = read(fd[0], buffer, BUFFER_SIZE);
+    ssize_t read_bytes = read(fd[0], buffer, messages_size);
 
     if (read_bytes == -1)
         printf("error occured while read\n");
