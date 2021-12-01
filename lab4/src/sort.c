@@ -34,18 +34,14 @@ int main(const int argc, const char *argv[]) {
 
     int len = atoi(argv[1]);
 
-    printf("This program will sort an array of %d elements\n", len);
-
     int *arr = malloc(sizeof(int) * len);
 
-    printf("Randomly generated array of %d elements:\n", len);
+    printf("Enter %d elements of array:\n", len);
 
 
     for (__auto_type i = 0; i < len; i++) {
-        arr[i] = rand() % INT8_MAX;
-        printf("%d ", arr[i]);
+        scanf("%d", &arr[i]);
     }
-    printf("\n");
 
 
     slow_sort(arr, len);
