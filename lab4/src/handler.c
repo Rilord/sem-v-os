@@ -3,51 +3,20 @@
 #include <string.h>
 #include <math.h>
 
-#define CHILDS_COUNT 4
+#define CHILDS_COUNT 2
 #define BUFFER_SIZE 2048
 #define MSG "01"
 #define MSG_LEN 2
 
-static mod g_mod = PRINT;
+static mod g_mod = QUIET;
 
 static void sig_change_mod(int signum) { 
     g_mod = g_mod == PRINT ? QUIET : PRINT;
 }
 
-static void free_strings_array(char **arr, int n) {
-    for (size_t i = 0; i < n; i++)
-        free(arr[i]);
-    free(arr);
-}
-
-static char *repeat_string(const char *str, int count) {
-    int message_size = MSG_LEN * (count = (int) pow(2, count));
-    char *ret = malloc(message_size);
-    if (ret == NULL)
-        return NULL;
-    strcpy(ret, str);
-    while (--count > 0) {
-        strcat(ret, str);
-    }
-    return ret;
-}
-
-static char **create_messages() {
-    char **arr = (char **) malloc(CHILDS_COUNT * sizeof(char *));
-    if (arr == NULL)
-        return NULL;
-    for (size_t i = 0; i < CHILDS_COUNT; ++i) {
-        arr[i] = (char *) repeat_string(MSG, i);
-        if (arr[i] == NULL) {
-            free_strings_array(arr, i);
-            return NULL;
-        }
-    }
-
-    return arr;
-}
 
 int main(void) {
+
 
     signal(SIGTSTP, sig_change_mod);
 
@@ -55,15 +24,14 @@ int main(void) {
     pid_t childs[CHILDS_COUNT];
     char buffer[BUFFER_SIZE];
 
-    char **messages = create_messages();
-
-    if (messages == NULL)
-        exit(ERROR_ALLOC_FAIL);
+    const char *messages[2] = { "AAA", "XXXXXXX" };
 
     if (pipe(fd) == -1) {
         fprintf(stderr, "Can't pipe\n");
         exit(ERROR_PIPE_FAILED);
     }
+
+    sleep(1);
 
     printf("parent born: PID = %d ; PPID = %d ; GROUP = %d\n", getpid(),
             getppid(), getpgrp());
@@ -87,10 +55,13 @@ int main(void) {
                 printf("child %zd send: quiet mode. no message send\n", i);
             }
 
+
             exit(SUCCESS);
         } else {
             childs[i] = pid;
         }
+
+        g_mod = QUIET;
 
         sleep(1);
     }
@@ -129,8 +100,6 @@ int main(void) {
     printf("parent recv: %s (%zu)\n", buffer, strlen(buffer));
     printf("parent died : PID = %d ; PPID = %d : GROUP = %d\n", getpid(),
             getppid(), getpgrp());
-
-    free_strings_array(messages, CHILDS_COUNT);
 
     return SUCCESS;
 }
